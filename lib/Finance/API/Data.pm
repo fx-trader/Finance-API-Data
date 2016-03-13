@@ -57,4 +57,34 @@ get '/parse' => sub {
 
 };
 
+get '/lastclose' => sub {
+    my $db = Finance::HostedTrader::Datasource->new();
+    my $cfg = $db->cfg;
+    my $symbols  = query_parameters->get('s');
+
+    $symbols = (defined($symbols) ? [ split( ',', $symbols) ] : $cfg->symbols->natural);
+    my $jsonp_callback = query_parameters->get('jsoncallback');
+
+    content_type 'application/json';
+    my $timeframe = 300;#TODO hardcoded lowest available timeframe is 5min. Could look it up in the config object ($db->cfg) instead.
+
+    my @results;
+    foreach my $symbol (@{$symbols}) {
+        push @results, $db->getLastClose( symbol => $symbol);
+    }
+
+    my $obj = {
+        "ResultSet" => {
+            "Total" => scalar(@results),
+            "Result" => \@results,
+        }
+    };
+
+    if ($jsonp_callback) {
+        return $jsonp_callback . '(' . to_json($obj) . ')';
+    } else {
+        return to_json($obj);
+    }
+};
+
 true;
