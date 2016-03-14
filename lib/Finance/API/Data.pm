@@ -15,11 +15,12 @@ get '/parse' => sub {
     my $timeframe  = query_parameters->get('t') || 'day';
     my $expr = 'datetime,'.query_parameters->get('e');
     my $symbols = (defined(query_parameters->get('s')) ? [ split( ',', query_parameters->get('s')) ] : $cfg->symbols->natural);
+    my $max_display_items = query_parameters->get('d') || 1;
     my $jsonp_callback = query_parameters->get('jsoncallback');
+    my $max_loaded_items = query_parameters->get('l') || 1000;
 
     content_type 'application/json';
 
-    my ($max_loaded_items, $max_display_items, $symbols_txt) = (1000, 1);
     my @results;
     foreach my $symbol (@{$symbols}) {
         my $data = $signal_processor->getIndicatorData({
@@ -30,16 +31,15 @@ get '/parse' => sub {
                                     'numItems' => $max_display_items,
                                 });
         next unless(defined($data));
-        $data = $data->[0];
-        next unless(defined($data));
 
-        my %hash;
-        $hash{symbol} = $symbol;
-        for (my $i=0;$i<scalar(@$data);$i++) {
-            $hash{"item$i"} = $data->[$i];
+        foreach my $row (@$data) {
+            my %hash;
+            $hash{symbol} = $symbol;
+            for (my $i=0;$i<scalar(@$row);$i++) {
+                $hash{"item$i"} = $row->[$i];
+            }
+            push @results, \%hash;
         }
-
-        push @results, \%hash;
     }
 
     my $obj = {
