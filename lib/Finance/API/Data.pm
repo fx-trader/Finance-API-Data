@@ -56,7 +56,8 @@ get '/lastclose' => sub {
 
     my %results;
     foreach my $symbol (@{$symbols}) {
-        $results{$symbol} = $db->getLastClose( symbol => $symbol);
+        my @lastclose = $db->getLastClose( symbol => $symbol);
+        $results{$symbol} = \@lastclose;
     }
 
     if ($jsonp_callback) {
