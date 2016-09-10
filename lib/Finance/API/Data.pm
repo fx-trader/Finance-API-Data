@@ -21,7 +21,7 @@ get '/parse' => sub {
 
     content_type 'application/json';
 
-    my @results;
+    my %results;
     foreach my $symbol (@{$symbols}) {
         my $data = $signal_processor->getIndicatorData({
                                     'fields' => $expr,
@@ -31,29 +31,14 @@ get '/parse' => sub {
                                     'numItems' => $max_display_items,
                                 });
         next unless(defined($data));
-
-        foreach my $row (@$data) {
-            my %hash;
-            $hash{symbol} = $symbol;
-            for (my $i=0;$i<scalar(@$row);$i++) {
-                $hash{"item$i"} = $row->[$i];
-            }
-            push @results, \%hash;
-        }
+        $results{$symbol} = $data;
     }
 
-#    my $obj = {
-#        "ResultSet" => {
-#            "Total" => scalar(@results),
-#            "Result" => \@results,
-#        }
-#    };
-    my $obj = \@results;
 
     if ($jsonp_callback) {
-        return $jsonp_callback . '(' . to_json($obj) . ')';
+        return $jsonp_callback . '(' . to_json(\%results) . ')';
     } else {
-        return to_json($obj);
+        return to_json(\%results);
     }
 
 };
@@ -69,23 +54,15 @@ get '/lastclose' => sub {
     content_type 'application/json';
     my $timeframe = 300;#TODO hardcoded lowest available timeframe is 5min. Could look it up in the config object ($db->cfg) instead.
 
-    my @results;
+    my %results;
     foreach my $symbol (@{$symbols}) {
-        push @results, $db->getLastClose( symbol => $symbol);
+        $results{$symbol} = $db->getLastClose( symbol => $symbol);
     }
 
-#    my $obj = {
-#        "ResultSet" => {
-#            "Total" => scalar(@results),
-#            "Result" => \@results,
-#        }
-#    };
-    my $obj = \@results;
-
     if ($jsonp_callback) {
-        return $jsonp_callback . '(' . to_json($obj) . ')';
+        return $jsonp_callback . '(' . to_json(\%results) . ')';
     } else {
-        return to_json($obj);
+        return to_json(\%results);
     }
 };
 
