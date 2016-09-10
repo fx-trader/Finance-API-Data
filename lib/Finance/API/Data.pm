@@ -42,12 +42,13 @@ get '/parse' => sub {
         push @results, \%hash;
     }
 
-    my $obj = {
-        "ResultSet" => {
-            "Total" => scalar(@results),
-            "Result" => \@results,
-        }
-    };
+#    my $obj = {
+#        "ResultSet" => {
+#            "Total" => scalar(@results),
+#            "Result" => \@results,
+#        }
+#    };
+    my $obj = \@results;
 
     if ($jsonp_callback) {
         return $jsonp_callback . '(' . to_json($obj) . ')';
@@ -73,12 +74,13 @@ get '/lastclose' => sub {
         push @results, $db->getLastClose( symbol => $symbol);
     }
 
-    my $obj = {
-        "ResultSet" => {
-            "Total" => scalar(@results),
-            "Result" => \@results,
-        }
-    };
+#    my $obj = {
+#        "ResultSet" => {
+#            "Total" => scalar(@results),
+#            "Result" => \@results,
+#        }
+#    };
+    my $obj = \@results;
 
     if ($jsonp_callback) {
         return $jsonp_callback . '(' . to_json($obj) . ')';
