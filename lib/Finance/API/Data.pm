@@ -6,6 +6,7 @@ our $VERSION = '0.1';
 use JSON::MaybeXS;
 use Finance::HostedTrader::Datasource;
 use Finance::HostedTrader::ExpressionParser;
+use Date::Manip;
 
 get '/parse' => sub {
     my $db = Finance::HostedTrader::Datasource->new();
@@ -40,6 +41,48 @@ get '/parse' => sub {
     } else {
         return to_json(\%results);
     }
+
+};
+
+get '/signal' => sub {
+    my $db = Finance::HostedTrader::Datasource->new();
+    my $cfg = $db->cfg;
+    my $signal_processor = Finance::HostedTrader::ExpressionParser->new($db);
+
+    my $timeframe  = query_parameters->get('t') || 'day';
+    my $expr = query_parameters->get('e');
+    my $symbols = (defined(query_parameters->get('s')) ? [ split( ',', query_parameters->get('s')) ] : $cfg->symbols->natural);
+    my $max_display_items = query_parameters->get('d') || 1;
+    my $jsonp_callback = query_parameters->get('jsoncallback');
+    my $max_loaded_items = query_parameters->get('l') || 1000;
+    my $startPeriod = '90 days ago';
+    my $endPeriod = 'now';
+
+    content_type 'application/json';
+
+    my %results;
+    foreach my $symbol (@{$symbols}) {
+        my $data = $signal_processor->getSignalData({
+                                    'expr'          => $expr,
+                                    'numItems'      => $max_display_items,
+                                    'symbol'        => $symbol,
+                                    'tf'            => $timeframe,
+                                    'maxLoadedItems'=> $max_loaded_items,
+                                    'startPeriod'   => UnixDate($startPeriod, '%Y-%m-%d %H:%M:%S'),
+                                    'endPeriod'     => UnixDate($endPeriod, '%Y-%m-%d %H:%M:%S'),
+                                });
+        next unless(defined($data));
+        $results{$symbol} = $data;
+    }
+
+
+    if ($jsonp_callback) {
+        return $jsonp_callback . '(' . to_json(\%results) . ')';
+    } else {
+        return to_json(\%results);
+    }
+
+
 
 };
 
