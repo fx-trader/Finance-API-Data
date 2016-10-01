@@ -61,25 +61,32 @@ get '/signal' => sub {
     content_type 'application/json';
 
     my %results;
+    my $params = {
+        'expr'          => $expr,
+        'numItems'      => $max_display_items,
+        'tf'            => $timeframe,
+        'maxLoadedItems'=> $max_loaded_items,
+        'startPeriod'   => UnixDate($startPeriod, '%Y-%m-%d %H:%M:%S'),
+        'endPeriod'     => UnixDate($endPeriod, '%Y-%m-%d %H:%M:%S'),
+    };
+
     foreach my $symbol (@{$symbols}) {
-        my $data = $signal_processor->getSignalData({
-                                    'expr'          => $expr,
-                                    'numItems'      => $max_display_items,
-                                    'symbol'        => $symbol,
-                                    'tf'            => $timeframe,
-                                    'maxLoadedItems'=> $max_loaded_items,
-                                    'startPeriod'   => UnixDate($startPeriod, '%Y-%m-%d %H:%M:%S'),
-                                    'endPeriod'     => UnixDate($endPeriod, '%Y-%m-%d %H:%M:%S'),
-                                });
+        $params->{symbol} = $symbol;
+        my $data = $signal_processor->getSignalData($params);
         next unless(defined($data));
         $results{$symbol} = $data;
     }
 
+    my $return_obj = {
+        params => $params,
+        results => \%results,
+    };
+
 
     if ($jsonp_callback) {
-        return $jsonp_callback . '(' . to_json(\%results) . ')';
+        return $jsonp_callback . '(' . to_json($return_obj) . ')';
     } else {
-        return to_json(\%results);
+        return to_json($return_obj);
     }
 
 
