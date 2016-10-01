@@ -33,7 +33,6 @@ get '/indicator' => sub {
     foreach my $symbol (@{$symbols}) {
         $params->{symbol} = $symbol;
         my $indicator_result = $signal_processor->getIndicatorData($params);
-        next unless(defined($indicator_result->{data}));
         $results{$symbol} = $indicator_result;
     }
     delete $params->{symbol};
@@ -79,9 +78,8 @@ get '/signal' => sub {
 
     foreach my $symbol (@{$symbols}) {
         $params->{symbol} = $symbol;
-        my $data = $signal_processor->getSignalData($params);
-        next unless(defined($data));
-        $results{$symbol} = $data;
+        my $signal_result = $signal_processor->getSignalData($params);
+        $results{$symbol} = $signal_result;
     }
     delete $params->{symbol};
 
