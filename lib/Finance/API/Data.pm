@@ -35,10 +35,10 @@ get '/indicator' => sub {
         my $indicator_result = $signal_processor->getIndicatorData($params);
         $results{$symbol} = $indicator_result;
     }
-    delete $params->{symbol};
+#    delete $params->{symbol};
 
     my $return_obj = {
-        params => $params,
+#        params => $params,
         results => \%results,
     };
 
@@ -81,10 +81,10 @@ get '/signal' => sub {
         my $signal_result = $signal_processor->getSignalData($params);
         $results{$symbol} = $signal_result;
     }
-    delete $params->{symbol};
+#    delete $params->{symbol};
 
     my $return_obj = {
-        params => $params,
+#        params => $params,
         results => \%results,
     };
 
