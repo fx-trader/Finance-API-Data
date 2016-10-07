@@ -8,7 +8,7 @@ use Finance::HostedTrader::Datasource;
 use Finance::HostedTrader::ExpressionParser;
 use Date::Manip;
 
-get '/indicator' => sub {
+get '/indicators' => sub {
     my $db = Finance::HostedTrader::Datasource->new();
     my $cfg = $db->cfg;
     my $signal_processor = Finance::HostedTrader::ExpressionParser->new($db);
@@ -50,7 +50,7 @@ get '/indicator' => sub {
 
 };
 
-get '/signal' => sub {
+get '/signals' => sub {
     my $db = Finance::HostedTrader::Datasource->new();
     my $cfg = $db->cfg;
     my $signal_processor = Finance::HostedTrader::ExpressionParser->new($db);
