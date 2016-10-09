@@ -6,8 +6,9 @@ our $VERSION = '0.1';
 use JSON::MaybeXS;
 use Finance::HostedTrader::Datasource;
 use Finance::HostedTrader::ExpressionParser;
+use Date::Manip;
 
-get '/parse' => sub {
+get '/indicators' => sub {
     my $db = Finance::HostedTrader::Datasource->new();
     my $cfg = $db->cfg;
     my $signal_processor = Finance::HostedTrader::ExpressionParser->new($db);
@@ -22,24 +23,79 @@ get '/parse' => sub {
     content_type 'application/json';
 
     my %results;
+    my $params = {
+        'fields' => $expr,
+        'tf'     => $timeframe,
+        'maxLoadedItems' => $max_loaded_items,
+        'numItems' => $max_display_items,
+    };
+
     foreach my $symbol (@{$symbols}) {
-        my $data = $signal_processor->getIndicatorData({
-                                    'fields' => $expr,
-                                    'symbol' => $symbol,
-                                    'tf'     => $timeframe,
-                                    'maxLoadedItems' => $max_loaded_items,
-                                    'numItems' => $max_display_items,
-                                });
-        next unless(defined($data));
-        $results{$symbol} = $data;
+        $params->{symbol} = $symbol;
+        my $indicator_result = $signal_processor->getIndicatorData($params);
+        $results{$symbol} = $indicator_result;
     }
+#    delete $params->{symbol};
+
+    my $return_obj = {
+#        params => $params,
+        results => \%results,
+    };
+
+    if ($jsonp_callback) {
+        return $jsonp_callback . '(' . to_json($return_obj) . ')';
+    } else {
+        return to_json($return_obj);
+    }
+
+};
+
+get '/signals' => sub {
+    my $db = Finance::HostedTrader::Datasource->new();
+    my $cfg = $db->cfg;
+    my $signal_processor = Finance::HostedTrader::ExpressionParser->new($db);
+
+    my $timeframe  = query_parameters->get('t') || 'day';
+    my $expr = query_parameters->get('e');
+    my $symbols = (defined(query_parameters->get('s')) ? [ split( ',', query_parameters->get('s')) ] : $cfg->symbols->natural);
+    my $max_display_items = query_parameters->get('d') || 1;
+    my $jsonp_callback = query_parameters->get('jsoncallback');
+    my $max_loaded_items = query_parameters->get('l') || 1000;
+    my $startPeriod = '90 days ago';
+    my $endPeriod = 'now';
+
+    content_type 'application/json';
+
+    my %results;
+    my $params = {
+        'expr'          => $expr,
+        'numItems'      => $max_display_items,
+        'tf'            => $timeframe,
+        'maxLoadedItems'=> $max_loaded_items,
+        'startPeriod'   => UnixDate($startPeriod, '%Y-%m-%d %H:%M:%S'),
+        'endPeriod'     => UnixDate($endPeriod, '%Y-%m-%d %H:%M:%S'),
+    };
+
+    foreach my $symbol (@{$symbols}) {
+        $params->{symbol} = $symbol;
+        my $signal_result = $signal_processor->getSignalData($params);
+        $results{$symbol} = $signal_result;
+    }
+#    delete $params->{symbol};
+
+    my $return_obj = {
+#        params => $params,
+        results => \%results,
+    };
 
 
     if ($jsonp_callback) {
-        return $jsonp_callback . '(' . to_json(\%results) . ')';
+        return $jsonp_callback . '(' . to_json($return_obj) . ')';
     } else {
-        return to_json(\%results);
+        return to_json($return_obj);
     }
+
+
 
 };
 
