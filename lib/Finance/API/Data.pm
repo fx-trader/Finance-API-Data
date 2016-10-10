@@ -14,42 +14,64 @@ get '/indicators' => sub {
     my $signal_processor = Finance::HostedTrader::ExpressionParser->new($db);
 
     my $timeframe  = query_parameters->get('t') || 'day';
-    my $expr = 'datetime,'.query_parameters->get('e');
-    my $symbols = (defined(query_parameters->get('s')) ? [ split( ',', query_parameters->get('s')) ] : $cfg->symbols->natural);
+    my $expr = query_parameters->get('e');
+    my $symbols = (defined(query_parameters->get('s')) ? [ split( ',', query_parameters->get('s')) ] : []);
     my $max_display_items = query_parameters->get('d') || 1;
-    my $max_loaded_items = query_parameters->get('l') || 1000;
+    my $max_loaded_items = query_parameters->get('l') || 2000;
 
     content_type 'application/json';
 
+    if (!$expr) {
+        status 400;
+        return _generate_response( id => "missing_expression", message => "The e parameters is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+    }
+
+    if (!$symbols) {
+        status 400;
+        return _generate_response( id => "missing_symbol", message => "The s parameters is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+    }
+
+
     my %results;
     my $params = {
-        'fields' => $expr,
+        'fields' => "datetime,".$expr,
         'tf'     => $timeframe,
         'maxLoadedItems' => $max_loaded_items,
         'numItems' => $max_display_items,
     };
 
+    my %all_symbols = map { $_ => 1 } @{ $cfg->symbols->all() };
     foreach my $symbol (@{$symbols}) {
+        if (!$all_symbols{$symbol}) {
+            status 400;
+            return _generate_response( id => "invalid_symbol", message => "Symbol $symbol is not supported", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+        }
         $params->{symbol} = $symbol;
         my $indicator_result;
         eval {
             $indicator_result = $signal_processor->getIndicatorData($params);
-        };
-        if ($@) {
+            1;
+        } || do {
+            my $e = $@;
             status 500;
-            return _generate_response( { id => "error", message => $@, url => "http://api.fxhistoricaldata.com/" } );
-        }
+
+            if ( $e =~ /Syntax error/ ) {
+                return _generate_response( id => "syntax_error", message => "Syntax error in expression '$expr'", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+            } else {
+                return _generate_response( id => "internal_error", message => $e, url => "" );
+            }
+        };
 
         $results{$symbol} = $indicator_result;
     }
 #    delete $params->{symbol};
 
-    my $return_obj = {
+    my %return_obj = (
 #        params => $params,
         results => \%results,
-    };
+    );
 
-    return _generate_response($return_obj);
+    return _generate_response(%return_obj);
 };
 
 get '/signals' => sub {
@@ -59,13 +81,23 @@ get '/signals' => sub {
 
     my $timeframe  = query_parameters->get('t') || 'day';
     my $expr = query_parameters->get('e');
-    my $symbols = (defined(query_parameters->get('s')) ? [ split( ',', query_parameters->get('s')) ] : $cfg->symbols->natural);
+    my $symbols = (defined(query_parameters->get('s')) ? [ split( ',', query_parameters->get('s')) ] : []);
     my $max_display_items = query_parameters->get('d') || 1;
-    my $max_loaded_items = query_parameters->get('l') || 1000;
+    my $max_loaded_items = query_parameters->get('l') || 2000;
     my $startPeriod = '90 days ago';
     my $endPeriod = 'now';
 
     content_type 'application/json';
+
+    if (!$expr) {
+        status 400;
+        return _generate_response( id => "missing_expression", message => "The e parameters is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+    }
+
+    if (!$symbols) {
+        status 400;
+        return _generate_response( id => "missing_symbol", message => "The s parameters is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+    }
 
     my %results;
     my $params = {
@@ -77,27 +109,38 @@ get '/signals' => sub {
         'endPeriod'     => UnixDate($endPeriod, '%Y-%m-%d %H:%M:%S'),
     };
 
+    my %all_symbols = map { $_ => 1 } @{ $cfg->symbols->all() };
     foreach my $symbol (@{$symbols}) {
+        if (!$all_symbols{$symbol}) {
+            status 400;
+            return _generate_response( id => "invalid_symbol", message => "Symbol $symbol is not supported", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+        }
         $params->{symbol} = $symbol;
         my $signal_result;
         eval {
             $signal_result = $signal_processor->getSignalData($params);
-        };
-        if ($@) {
+            1;
+        } || do {
+            my $e = $@;
             status 500;
-            return _generate_response( { id => "error", message => $@, url => "http://api.fxhistoricaldata.com/" } );
-        }
+
+            if ( $e =~ /Syntax error/ ) {
+                return _generate_response( id => "syntax_error", message => "Syntax error in expression '$expr'", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+            } else {
+                return _generate_response( id => "internal_error", message => $e, url => "" );
+            }
+        };
         $results{$symbol} = $signal_result;
     }
 #    delete $params->{symbol};
 
-    my $return_obj = {
+    my %return_obj = (
 #        params => $params,
         results => \%results,
-    };
+    );
 
 
-    return _generate_response($return_obj);
+    return _generate_response(%return_obj);
 
 };
 
@@ -117,23 +160,23 @@ get '/lastclose' => sub {
         $results{$symbol} = \@lastclose;
     }
 
-    return _generate_response(\%results);
+    return _generate_response(%results);
 };
 
 any qr{.*} => sub {
     status 404;
 
-    return _generate_response( { id => "not_found",  message => "The requested resource does not exist", url => "http://api.fxhistoricaldata.com/" } );
+    return _generate_response( id => "not_found",  message => "The requested resource does not exist", url => "http://apidocs.fxhistoricaldata.com/#api-reference" );
 };
 
 sub _generate_response {
-    my $results = shift;
+    my %results = @_;
     my $jsonp_callback = query_parameters->get('jsoncallback');
 
     if ($jsonp_callback) {
-        return $jsonp_callback . '(' . to_json($results) . ')';
+        return $jsonp_callback . '(' . to_json(\%results) . ')';
     } else {
-        return to_json($results);
+        return to_json(\%results);
     }
 }
 
