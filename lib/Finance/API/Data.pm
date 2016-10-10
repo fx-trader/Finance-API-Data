@@ -49,7 +49,7 @@ get '/indicators' => sub {
         results => \%results,
     };
 
-    return _generate_response(\%results);
+    return _generate_response($return_obj);
 };
 
 get '/signals' => sub {
@@ -97,7 +97,7 @@ get '/signals' => sub {
     };
 
 
-    return _generate_response(\%results);
+    return _generate_response($return_obj);
 
 };
 
