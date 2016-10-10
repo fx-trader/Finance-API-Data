@@ -5,30 +5,39 @@ our $VERSION = '0.1';
 
 use JSON::MaybeXS;
 use Finance::HostedTrader::Datasource;
+use Finance::HostedTrader::Config;
 use Finance::HostedTrader::ExpressionParser;
 use Date::Manip;
+
+get '/instruments' => sub {
+    my $cfg = Finance::HostedTrader::Config->new();
+
+    my $instruments = $cfg->symbols->all();
+
+    return _generate_response( results => $instruments );
+};
 
 get '/indicators' => sub {
     my $db = Finance::HostedTrader::Datasource->new();
     my $cfg = $db->cfg;
     my $signal_processor = Finance::HostedTrader::ExpressionParser->new($db);
 
-    my $timeframe  = query_parameters->get('t') || 'day';
-    my $expr = query_parameters->get('e');
-    my $symbols = (defined(query_parameters->get('s')) ? [ split( ',', query_parameters->get('s')) ] : []);
-    my $max_display_items = query_parameters->get('d') || 1;
+    my $timeframe  = query_parameters->get('timeframe') || 'day';
+    my $expr = query_parameters->get('expression');
+    my $instruments = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
+    my $max_display_items = query_parameters->get('itemcount') || 1;
     my $max_loaded_items = query_parameters->get('l') || 2000;
 
     content_type 'application/json';
 
     if (!$expr) {
         status 400;
-        return _generate_response( id => "missing_expression", message => "The e parameters is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+        return _generate_response( id => "missing_expression", message => "The e parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
     }
 
-    if (!$symbols) {
+    if (!$instruments) {
         status 400;
-        return _generate_response( id => "missing_symbol", message => "The s parameters is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+        return _generate_response( id => "missing_instrument", message => "The 'instruments' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
     }
 
 
@@ -40,13 +49,13 @@ get '/indicators' => sub {
         'numItems' => $max_display_items,
     };
 
-    my %all_symbols = map { $_ => 1 } @{ $cfg->symbols->all() };
-    foreach my $symbol (@{$symbols}) {
-        if (!$all_symbols{$symbol}) {
+    my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
+    foreach my $instrument (@{$instruments}) {
+        if (!$all_instruments{$instrument}) {
             status 400;
-            return _generate_response( id => "invalid_symbol", message => "Symbol $symbol is not supported", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+            return _generate_response( id => "invalid_instrument", message => "instrument $instrument is not supported", url => "http://apidocs.fxhistoricaldata.com/#available-markets" );
         }
-        $params->{symbol} = $symbol;
+        $params->{symbol} = $instrument;
         my $indicator_result;
         eval {
             $indicator_result = $signal_processor->getIndicatorData($params);
@@ -62,7 +71,7 @@ get '/indicators' => sub {
             }
         };
 
-        $results{$symbol} = $indicator_result;
+        $results{$instrument} = $indicator_result;
     }
 #    delete $params->{symbol};
 
@@ -79,10 +88,10 @@ get '/signals' => sub {
     my $cfg = $db->cfg;
     my $signal_processor = Finance::HostedTrader::ExpressionParser->new($db);
 
-    my $timeframe  = query_parameters->get('t') || 'day';
-    my $expr = query_parameters->get('e');
-    my $symbols = (defined(query_parameters->get('s')) ? [ split( ',', query_parameters->get('s')) ] : []);
-    my $max_display_items = query_parameters->get('d') || 1;
+    my $timeframe  = query_parameters->get('timeframe') || 'day';
+    my $expr = query_parameters->get('expression');
+    my $instruments = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
+    my $max_display_items = query_parameters->get('itemcount') || 1;
     my $max_loaded_items = query_parameters->get('l') || 2000;
     my $startPeriod = '90 days ago';
     my $endPeriod = 'now';
@@ -91,12 +100,12 @@ get '/signals' => sub {
 
     if (!$expr) {
         status 400;
-        return _generate_response( id => "missing_expression", message => "The e parameters is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+        return _generate_response( id => "missing_expression", message => "The e parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
     }
 
-    if (!$symbols) {
+    if (!$instruments) {
         status 400;
-        return _generate_response( id => "missing_symbol", message => "The s parameters is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+        return _generate_response( id => "missing_instrument", message => "The 'instruments' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
     }
 
     my %results;
@@ -109,13 +118,13 @@ get '/signals' => sub {
         'endPeriod'     => UnixDate($endPeriod, '%Y-%m-%d %H:%M:%S'),
     };
 
-    my %all_symbols = map { $_ => 1 } @{ $cfg->symbols->all() };
-    foreach my $symbol (@{$symbols}) {
-        if (!$all_symbols{$symbol}) {
+    my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
+    foreach my $instrument (@{$instruments}) {
+        if (!$all_instruments{$instrument}) {
             status 400;
-            return _generate_response( id => "invalid_symbol", message => "Symbol $symbol is not supported", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+            return _generate_response( id => "invalid_instrument", message => "instrument $instrument is not supported", url => "http://apidocs.fxhistoricaldata.com/#available-markets" );
         }
-        $params->{symbol} = $symbol;
+        $params->{symbol} = $instrument;
         my $signal_result;
         eval {
             $signal_result = $signal_processor->getSignalData($params);
@@ -130,7 +139,7 @@ get '/signals' => sub {
                 return _generate_response( id => "internal_error", message => $e, url => "" );
             }
         };
-        $results{$symbol} = $signal_result;
+        $results{$instrument} = $signal_result;
     }
 #    delete $params->{symbol};
 
@@ -147,17 +156,17 @@ get '/signals' => sub {
 get '/lastclose' => sub {
     my $db = Finance::HostedTrader::Datasource->new();
     my $cfg = $db->cfg;
-    my $symbols  = query_parameters->get('s');
+    my $instruments  = query_parameters->get('instruments');
 
-    $symbols = (defined($symbols) ? [ split( ',', $symbols) ] : $cfg->symbols->natural);
+    $instruments = (defined($instruments) ? [ split( ',', $instruments) ] : $cfg->symbols->natural);
 
     content_type 'application/json';
     my $timeframe = 300;#TODO hardcoded lowest available timeframe is 5min. Could look it up in the config object ($db->cfg) instead.
 
     my %results;
-    foreach my $symbol (@{$symbols}) {
-        my @lastclose = $db->getLastClose( symbol => $symbol);
-        $results{$symbol} = \@lastclose;
+    foreach my $instrument (@{$instruments}) {
+        my @lastclose = $db->getLastClose( symbol => $instrument);
+        $results{$instrument} = \@lastclose;
     }
 
     return _generate_response(%results);
