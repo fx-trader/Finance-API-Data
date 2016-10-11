@@ -146,6 +146,8 @@ get '/signals' => sub {
 
             if ( $e =~ /Syntax error/ ) {
                 return _generate_response( id => "syntax_error", message => "Syntax error in expression '$expr'", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+            } elsif ( $e =~ /In a multiple timeframe signal expression/ ) {
+                return _generate_response( id => "multiple_timeframe_boolean_operators", message => "In a multiple timeframe signal expression, all boolean operators between timeframe functions need to be the same. This is a limitation of the API.", url => "http://apidocs.fxhistoricaldata.com/#multiple-timeframe-signals" );
             } else {
                 return _generate_response( id => "internal_error", message => $e, url => "" );
             }
