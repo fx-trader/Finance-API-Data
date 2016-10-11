@@ -9,6 +9,17 @@ use Finance::HostedTrader::Config;
 use Finance::HostedTrader::ExpressionParser;
 use Date::Manip;
 
+get '/' => sub {
+
+    return _generate_response(
+        endpoints => [
+            'http://api.fxhistoricaldata.com/v1/instruments',
+            'http://api.fxhistoricaldata.com/v1/indicators',
+            'http://api.fxhistoricaldata.com/v1/signals',
+        ]
+    );
+};
+
 get '/instruments' => sub {
     my $cfg = Finance::HostedTrader::Config->new();
 
@@ -32,10 +43,10 @@ get '/indicators' => sub {
 
     if (!$expr) {
         status 400;
-        return _generate_response( id => "missing_expression", message => "The e parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+        return _generate_response( id => "missing_expression", message => "The 'expression' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
     }
 
-    if (!$instruments) {
+    if (!@$instruments) {
         status 400;
         return _generate_response( id => "missing_instrument", message => "The 'instruments' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
     }
@@ -100,10 +111,10 @@ get '/signals' => sub {
 
     if (!$expr) {
         status 400;
-        return _generate_response( id => "missing_expression", message => "The e parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+        return _generate_response( id => "missing_expression", message => "The 'expression' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
     }
 
-    if (!$instruments) {
+    if (!@$instruments) {
         status 400;
         return _generate_response( id => "missing_instrument", message => "The 'instruments' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
     }
