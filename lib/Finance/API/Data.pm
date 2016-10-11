@@ -88,10 +88,10 @@ get '/indicators' => sub {
 
         $results{$instrument} = $indicator_result;
     }
-#    delete $params->{symbol};
+    delete $params->{symbol};
 
     my %return_obj = (
-#        params => $params,
+        params => $params,
         results => \%results,
     );
 
@@ -108,8 +108,8 @@ get '/signals' => sub {
     my $instruments = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
     my $max_display_items = query_parameters->get('itemcount') || 1;
     my $max_loaded_items = query_parameters->get('l') || 2000;
-    my $startPeriod = '90 days ago';
-    my $endPeriod = 'now';
+    my $startPeriod = query_parameters->get('start_period') || '3 months ago';
+    my $endPeriod = query_parameters->get('end_period') || 'now';
 
     content_type 'application/json';
 
@@ -123,14 +123,26 @@ get '/signals' => sub {
         return _generate_response( id => "missing_instrument", message => "The 'instruments' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
     }
 
+    my $formattedStartPeriod    = UnixDate($startPeriod,    '%Y-%m-%d %H:%M:%S');
+    if (!$formattedStartPeriod) {
+        status 400;
+        return _generate_response( id => "invalid_start_period", message => "The 'start_period' parameter value $startPeriod is not a valid date", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+    }
+
+    my $formattedEndPeriod      = UnixDate($endPeriod,      '%Y-%m-%d %H:%M:%S');
+    if (!$formattedEndPeriod) {
+        status 400;
+        return _generate_response( id => "invalid_end_period", message => "The 'end_period' parameter value $endPeriod is not a valid date", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+    }
+
     my %results;
     my $params = {
         'expr'          => $expr,
         'numItems'      => $max_display_items,
         'tf'            => $timeframe,
         'maxLoadedItems'=> $max_loaded_items,
-        'startPeriod'   => UnixDate($startPeriod, '%Y-%m-%d %H:%M:%S'),
-        'endPeriod'     => UnixDate($endPeriod, '%Y-%m-%d %H:%M:%S'),
+        'startPeriod'   => $formattedStartPeriod,
+        'endPeriod'     => $formattedEndPeriod,
     };
 
     my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
@@ -161,7 +173,7 @@ get '/signals' => sub {
 #    delete $params->{symbol};
 
     my %return_obj = (
-#        params => $params,
+        params => $params,
         results => \%results,
     );
 
