@@ -16,7 +16,11 @@ get '/' => sub {
             'http://api.fxhistoricaldata.com/v1/instruments',
             'http://api.fxhistoricaldata.com/v1/indicators',
             'http://api.fxhistoricaldata.com/v1/signals',
-        ]
+        ],
+        links => {
+            documentation => 'http://apidocs.fxhistoricaldata.com/',
+            status => 'http://status.fxhistoricaldata.com/',
+        },
     );
 };
 
