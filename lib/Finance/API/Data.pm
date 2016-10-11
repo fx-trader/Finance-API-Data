@@ -170,7 +170,7 @@ get '/signals' => sub {
         };
         $results{$instrument} = $signal_result;
     }
-#    delete $params->{symbol};
+    delete $params->{symbol};
 
     my %return_obj = (
         params => $params,
