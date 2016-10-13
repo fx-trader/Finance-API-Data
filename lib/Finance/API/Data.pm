@@ -14,6 +14,7 @@ get '/' => sub {
     return _generate_response(
         endpoints => [
             'http://api.fxhistoricaldata.com/v1/instruments',
+            'http://api.fxhistoricaldata.com/v1/timeframes',
             'http://api.fxhistoricaldata.com/v1/indicators',
             'http://api.fxhistoricaldata.com/v1/signals',
         ],
@@ -30,6 +31,14 @@ get '/instruments' => sub {
     my $instruments = $cfg->symbols->all();
 
     return _generate_response( results => $instruments );
+};
+
+get '/timeframes' => sub {
+    my $cfg = Finance::HostedTrader::Config->new();
+
+    my $timeframes = $cfg->timeframes->all_by_name();
+
+    return _generate_response( results => $timeframes );
 };
 
 get '/indicators' => sub {
