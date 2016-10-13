@@ -64,6 +64,11 @@ get '/indicators' => sub {
         return _generate_response( id => "missing_instrument", message => "The 'instruments' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
     }
 
+    my %all_timeframes = map { $_ => 1 } @{ $cfg->timeframes->all_by_name() };
+    if (!$all_timeframes{$timeframe}) {
+        status 400;
+        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+    }
 
     my %results;
     my $params = {
@@ -142,6 +147,12 @@ get '/signals' => sub {
     if (!$formattedEndPeriod) {
         status 400;
         return _generate_response( id => "invalid_end_period", message => "The 'end_period' parameter value $endPeriod is not a valid date", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+    }
+
+    my %all_timeframes = map { $_ => 1 } @{ $cfg->timeframes->all_by_name() };
+    if (!$all_timeframes{$timeframe}) {
+        status 400;
+        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://apidocs.fxhistoricaldata.com/#signals" );
     }
 
     my %results;
