@@ -52,8 +52,6 @@ get '/indicators' => sub {
     my $max_display_items = query_parameters->get('item_count') || 10;
     my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
 
-    content_type 'application/json';
-
     if (!$expr) {
         status 400;
         return _generate_response( id => "missing_expression", message => "The 'expression' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
@@ -124,8 +122,6 @@ get '/signals' => sub {
     my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
     my $startPeriod = query_parameters->get('start_period') || '3 months ago';
     my $endPeriod = query_parameters->get('end_period') || 'now';
-
-    content_type 'application/json';
 
     if (!$expr) {
         status 400;
@@ -209,7 +205,6 @@ get '/lastclose' => sub {
 
     $instruments = (defined($instruments) ? [ split( ',', $instruments) ] : $cfg->symbols->natural);
 
-    content_type 'application/json';
     my $timeframe = 300;#TODO hardcoded lowest available timeframe is 5min. Could look it up in the config object ($db->cfg) instead.
 
     my %results;
@@ -229,7 +224,27 @@ any qr{.*} => sub {
 
 sub _generate_response {
     my %results = @_;
+    my $format = query_parameters->get('format') || 'json';
     my $jsonp_callback = query_parameters->get('jsoncallback');
+
+    if ($format eq 'csv') {
+        content_type 'text/csv';
+        my $instruments=query_parameters->get('instruments');
+        $instruments =~ s/,/_/g;
+        my $timeframe = query_parameters->get('timeframe');
+        header 'Content-Disposition' => "inline; filename=fxhistoricaldata_${instruments}_${timeframe}.csv";
+
+        my $buffer;
+        foreach my $instrument (keys( %{$results{results}} )) {
+            my $instrument_data = $results{results}->{$instrument}->{data};
+            foreach my $row (@$instrument_data) {
+                $buffer .= "$instrument," . join(",", @$row) . "\n";
+            }
+        }
+        return $buffer;
+    }
+
+    content_type 'application/json';
 
     if ($jsonp_callback) {
         return $jsonp_callback . '(' . to_json(\%results) . ')';
