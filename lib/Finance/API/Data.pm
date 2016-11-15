@@ -3,7 +3,7 @@ use Dancer2;
 
 our $VERSION = '0.1';
 
-use JSON::MaybeXS;
+use JSON::MaybeXS qw//;
 use Finance::HostedTrader::Datasource;
 use Finance::HostedTrader::Config;
 use Finance::HostedTrader::ExpressionParser;
@@ -247,9 +247,9 @@ sub _generate_response {
     content_type 'application/json';
 
     if ($jsonp_callback) {
-        return $jsonp_callback . '(' . to_json(\%results) . ')';
+        return $jsonp_callback . '(' . JSON::MaybeXS::to_json(\%results) . ')';
     } else {
-        return to_json(\%results);
+        return JSON::MaybeXS::to_json(\%results);
     }
 }
 
