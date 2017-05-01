@@ -71,10 +71,10 @@ get '/indicators' => sub {
 
     my %results;
     my $params = {
-        'fields' => "datetime,".$expr,
-        'tf'     => $timeframe,
-        'maxLoadedItems' => $max_loaded_items,
-        'numItems' => $max_display_items,
+        'expression'        => "datetime,".$expr,
+        'timeframe'         => $timeframe,
+        'max_loaded_items'  => $max_loaded_items,
+        'item_count'        => $max_display_items,
     };
 
     my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
@@ -224,9 +224,9 @@ get '/descriptivestatistics' => sub {
 
     my %results;
     my $params = {
-        'tf'            => $timeframe,
-        'maxLoadedItems'=> $max_loaded_items,
-        'numItems'      => $max_display_items,
+        'timeframe'         => $timeframe,
+        'max_loaded_items'  => $max_loaded_items,
+        'item_count'        => $max_display_items,
     };
 
     my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
