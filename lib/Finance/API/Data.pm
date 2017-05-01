@@ -51,6 +51,7 @@ get '/indicators' => sub {
     my $instruments = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
     my $max_display_items = query_parameters->get('item_count') || 10;
     my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
+    $max_loaded_items = $max_display_items if ($max_display_items > $max_lodaded_items);
 
     if (!$expr) {
         status 400;
@@ -120,6 +121,7 @@ get '/signals' => sub {
     my $instruments = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
     my $max_display_items = query_parameters->get('item_count') || 100;
     my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
+    $max_loaded_items = $max_display_items if ($max_display_items > $max_lodaded_items);
     my $startPeriod = query_parameters->get('start_period') || '3 months ago';
     my $endPeriod = query_parameters->get('end_period') || 'now';
 
@@ -207,6 +209,7 @@ get '/descriptivestatistics' => sub {
     my $instruments         = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
     my $max_display_items   = query_parameters->get('item_count') || 10;
     my $max_loaded_items    = query_parameters->get('max_loaded_items') || 5000;
+    $max_loaded_items       = $max_display_items if ($max_display_items > $max_lodaded_items);
 
     if (!@$instruments) {
         status 400;
