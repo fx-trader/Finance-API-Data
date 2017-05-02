@@ -155,12 +155,12 @@ get '/signals' => sub {
 
     my %results;
     my $params = {
-        'expr'          => $expr,
-        'numItems'      => $max_display_items,
-        'tf'            => $timeframe,
-        'maxLoadedItems'=> $max_loaded_items,
-        'startPeriod'   => $formattedStartPeriod,
-        'endPeriod'     => $formattedEndPeriod,
+        'expression'        => $expr,
+        'item_count'        => $max_display_items,
+        'timeframe'         => $timeframe,
+        'max_loaded_items'  => $max_loaded_items,
+        'start_period'      => $formattedStartPeriod,
+        'end_period'        => $formattedEndPeriod,
     };
 
     my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
