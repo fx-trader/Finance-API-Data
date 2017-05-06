@@ -259,6 +259,67 @@ get '/descriptivestatistics' => sub {
     return _generate_response(%return_obj);
 };
 
+get '/screener' => sub {
+    my $cfg                 = Finance::HostedTrader::Config->new();
+    #my $signal_processor    = Finance::HostedTrader::ExpressionParser->new();
+    my $instruments         = $cfg->symbols->all;
+
+    my $timeframe   = query_parameters->get('timeframe') || 'day';
+    my $expr        = query_parameters->get('expression');
+    my $max_display_items = 1;
+    my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
+
+    if (!$expr) {
+        status 400;
+        return _generate_response( id => "missing_expression", message => "The 'expression' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+    }
+
+    my %all_timeframes = map { $_ => 1 } @{ $cfg->timeframes->all_by_name() };
+    if (!$all_timeframes{$timeframe}) {
+        status 400;
+        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+    }
+
+    my %results;
+    my $params = {
+        'expression'        => "datetime,".$expr,
+        'timeframe'         => $timeframe,
+        'max_loaded_items'  => $max_loaded_items,
+        'item_count'        => $max_display_items,
+    };
+
+    foreach my $instrument (@{$instruments}) {
+        $params->{symbol} = $instrument;
+        my $indicator_result;
+        eval {
+            $indicator_result = $signal_processor->getIndicatorData($params);
+            1;
+        } || do {
+            my $e = $@;
+            status 500;
+
+            if ( $e =~ /Syntax error/ ) {
+                return _generate_response( id => "syntax_error", message => "Syntax error in expression '$expr'", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+            } else {
+                return _generate_response( id => "internal_error", message => $e, url => "" );
+            }
+        };
+
+        $results{$instrument} = $indicator_result;
+    }
+    delete $params->{symbol};
+
+
+
+    my %return_obj = (
+        params  => $params,
+        results => \%results,
+    );
+
+    return _generate_response(%return_obj);
+
+
+};
 
 get '/lastclose' => sub {
     my $db = Finance::HostedTrader::Datasource->new();
