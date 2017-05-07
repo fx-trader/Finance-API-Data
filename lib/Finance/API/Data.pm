@@ -261,13 +261,13 @@ get '/descriptivestatistics' => sub {
 
 get '/screener' => sub {
     my $cfg                 = Finance::HostedTrader::Config->new();
-    #my $signal_processor    = Finance::HostedTrader::ExpressionParser->new();
+    my $signal_processor    = Finance::HostedTrader::ExpressionParser->new();
     my $instruments         = $cfg->symbols->all;
 
     my $timeframe   = query_parameters->get('timeframe') || 'day';
     my $expr        = query_parameters->get('expression');
-    my $max_display_items = 1;
-    my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
+    my $max_display_items   = 1;
+    my $max_loaded_items    = query_parameters->get('max_loaded_items') || 5000;
 
     if (!$expr) {
         status 400;
@@ -281,6 +281,7 @@ get '/screener' => sub {
     }
 
     my %results;
+    my @ordered_results;
     my $params = {
         'expression'        => "datetime,".$expr,
         'timeframe'         => $timeframe,
@@ -305,15 +306,18 @@ get '/screener' => sub {
             }
         };
 
-        $results{$instrument} = $indicator_result;
+        $results{$instrument} = $indicator_result->{data};
     }
     delete $params->{symbol};
 
+    foreach my $instrument ( sort { $results{$a}->[0][1] <=> $results{$b}->[0][1] } keys %results) {
+        push @ordered_results, [ $instrument, @{$results{$instrument}->[0]} ];
+    }
 
 
     my %return_obj = (
         params  => $params,
-        results => \%results,
+        results => \@ordered_results,
     );
 
     return _generate_response(%return_obj);
