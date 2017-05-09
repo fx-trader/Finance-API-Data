@@ -310,7 +310,7 @@ get '/screener' => sub {
     }
     delete $params->{symbol};
 
-    foreach my $instrument ( sort { $results{$a}->[0][1] <=> $results{$b}->[0][1] } keys %results) {
+    foreach my $instrument ( sort { $results{$b}->[0][1] <=> $results{$a}->[0][1] } keys %results) {
         push @ordered_results, [ $instrument, @{$results{$instrument}->[0]} ];
     }
 
