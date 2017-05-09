@@ -13,10 +13,10 @@ get '/' => sub {
 
     return _generate_response(
         endpoints => [
-            'http://api.fxhistoricaldata.com/v1/instruments',
-            'http://api.fxhistoricaldata.com/v1/timeframes',
-            'http://api.fxhistoricaldata.com/v1/indicators',
-            'http://api.fxhistoricaldata.com/v1/signals',
+            'http://api.fxhistoricaldata.com/instruments',
+            'http://api.fxhistoricaldata.com/timeframes',
+            'http://api.fxhistoricaldata.com/indicators',
+            'http://api.fxhistoricaldata.com/signals',
         ],
         links => {
             documentation => 'http://apidocs.fxhistoricaldata.com/',
