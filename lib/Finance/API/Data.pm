@@ -262,7 +262,7 @@ get '/descriptivestatistics' => sub {
 get '/screener' => sub {
     my $cfg                 = Finance::HostedTrader::Config->new();
     my $signal_processor    = Finance::HostedTrader::ExpressionParser->new();
-    my $instruments         = $cfg->symbols->all;
+    my $instruments         = $cfg->symbols->natural;
 
     my $timeframe   = query_parameters->get('timeframe') || 'day';
     my $expr        = query_parameters->get('expression');
