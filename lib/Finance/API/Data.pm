@@ -17,6 +17,8 @@ get '/' => sub {
             'http://api.fxhistoricaldata.com/timeframes',
             'http://api.fxhistoricaldata.com/indicators',
             'http://api.fxhistoricaldata.com/signals',
+            'http://api.fxhistoricaldata.com/descriptivestatistics',
+            'http://api.fxhistoricaldata.com/screener',
         ],
         links => {
             documentation => 'http://apidocs.fxhistoricaldata.com/',
