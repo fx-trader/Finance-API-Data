@@ -1,0 +1,5 @@
+To start a dev container:
+    docker run -ti --rm --link fxdata:mysql -v $HOME/fxtrader.cfg:/etc/fxtrader -v ~/src:/src -p 6000:5000 fxtrader/finance-api-data bash
+    plackup -s Starman /src/Finance-API-Data/bin/app.psgi
+
+Then edit /etc/nginx/conf.d/api.conf and uncomment the "/dev/" location handler, restart nginx, and the dev container will be available externally under /dev

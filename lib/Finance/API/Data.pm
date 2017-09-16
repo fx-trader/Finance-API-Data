@@ -8,6 +8,7 @@ use Finance::HostedTrader::Datasource;
 use Finance::HostedTrader::Config;
 use Finance::HostedTrader::ExpressionParser;
 use Date::Manip;
+use MCE::Loop;
 
 get '/' => sub {
 
@@ -201,6 +202,90 @@ get '/signals' => sub {
     return _generate_response(%return_obj);
 
 };
+
+get '/signalsp' => sub {
+    my $db = Finance::HostedTrader::Datasource->new();
+    my $cfg = $db->cfg;
+
+    my $timeframe  = query_parameters->get('timeframe') || 'day';
+    my $expr = query_parameters->get('expression');
+    my $instruments = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
+    my $max_display_items = query_parameters->get('item_count') || 100;
+    my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
+    $max_loaded_items = $max_display_items if ($max_display_items > $max_loaded_items);
+    my $startPeriod = query_parameters->get('start_period') || '3 months ago';
+    my $endPeriod = query_parameters->get('end_period') || 'now';
+
+    if (!$expr) {
+        status 400;
+        return _generate_response( id => "missing_expression", message => "The 'expression' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+    }
+
+    if (!@$instruments) {
+        status 400;
+        return _generate_response( id => "missing_instrument", message => "The 'instruments' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+    }
+
+    my $formattedStartPeriod    = UnixDate($startPeriod,    '%Y-%m-%d %H:%M:%S');
+    if (!$formattedStartPeriod) {
+        status 400;
+        return _generate_response( id => "invalid_start_period", message => "The 'start_period' parameter value $startPeriod is not a valid date", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+    }
+
+    my $formattedEndPeriod      = UnixDate($endPeriod,      '%Y-%m-%d %H:%M:%S');
+    if (!$formattedEndPeriod) {
+        status 400;
+        return _generate_response( id => "invalid_end_period", message => "The 'end_period' parameter value $endPeriod is not a valid date", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+    }
+
+    my %all_timeframes = map { $_ => 1 } @{ $cfg->timeframes->all_by_name() };
+    if (!$all_timeframes{$timeframe}) {
+        status 400;
+        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+    }
+
+    my $params = {
+        'expression'        => $expr,
+        'item_count'        => $max_display_items,
+        'timeframe'         => $timeframe,
+        'max_loaded_items'  => $max_loaded_items,
+        'start_period'      => $formattedStartPeriod,
+        'end_period'        => $formattedEndPeriod,
+    };
+
+    my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
+
+    foreach my $instrument (@{$instruments}) {
+        if (!$all_instruments{$instrument}) {
+            status 400;
+            return _generate_response( id => "invalid_instrument", message => "instrument $instrument is not supported", url => "http://apidocs.fxhistoricaldata.com/#available-markets" );
+        }
+    }
+
+    my %results = mce_loop {
+        my ($mce, $chunk_ref, $chunk_id) = @_;
+        my %ret;
+        my $signal_processor = Finance::HostedTrader::ExpressionParser->new();
+        for my $instrument (@{ $chunk_ref }) {
+            $params->{symbol} = $instrument;
+            $ret{$instrument} = $signal_processor->getSignalData($params);
+        }
+        MCE->gather(%ret);
+
+    } $instruments;
+
+    delete $params->{symbol};
+
+    my %return_obj = (
+        params => $params,
+        results => \%results,
+    );
+
+
+    return _generate_response(%return_obj);
+
+};
+
 
 get '/descriptivestatistics' => sub {
     my $db  = Finance::HostedTrader::Datasource->new();
