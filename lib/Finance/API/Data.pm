@@ -54,6 +54,7 @@ get '/indicators' => sub {
     my $instruments = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
     my $max_display_items = query_parameters->get('item_count') || 10;
     my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
+    my $end_period = query_parameters->get('end_period') || '9999-12-31';
     $max_loaded_items = $max_display_items if ($max_display_items > $max_loaded_items);
 
     if (!$expr) {
@@ -64,6 +65,12 @@ get '/indicators' => sub {
     if (!@$instruments) {
         status 400;
         return _generate_response( id => "missing_instrument", message => "The 'instruments' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+    }
+
+    my $formattedEndPeriod      = UnixDate($end_period,      '%Y-%m-%d %H:%M:%S');
+    if (!$formattedEndPeriod) {
+        status 400;
+        return _generate_response( id => "invalid_end_period", message => "The 'end_period' parameter value $end_period is not a valid date", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
     }
 
     my %all_timeframes = map { $_ => 1 } @{ $cfg->timeframes->all_by_name() };
@@ -78,6 +85,7 @@ get '/indicators' => sub {
         'timeframe'         => $timeframe,
         'max_loaded_items'  => $max_loaded_items,
         'item_count'        => $max_display_items,
+        'end_period'        => $formattedEndPeriod,
     };
 
     my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
