@@ -92,6 +92,7 @@ get '/indicators' => sub {
         'timeframe'         => $timeframe,
         'max_loaded_items'  => $max_loaded_items,
         'item_count'        => $max_display_items,
+        'start_period'      => $formattedStartPeriod,
         'end_period'        => $formattedEndPeriod,
     };
 
