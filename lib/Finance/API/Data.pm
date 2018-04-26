@@ -54,6 +54,7 @@ get '/indicators' => sub {
     my $instruments = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
     my $max_display_items = query_parameters->get('item_count') || 10;
     my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
+    my $start_period = query_parameters->get('start_period') || '0001-01-01';
     my $end_period = query_parameters->get('end_period') || '9999-12-31';
     $max_loaded_items = $max_display_items if ($max_display_items > $max_loaded_items);
 
@@ -65,6 +66,12 @@ get '/indicators' => sub {
     if (!@$instruments) {
         status 400;
         return _generate_response( id => "missing_instrument", message => "The 'instruments' parameter is missing", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+    }
+
+    my $formattedStartPeriod      = UnixDate($start_period,      '%Y-%m-%d %H:%M:%S');
+    if (!$formattedStartPeriod) {
+        status 400;
+        return _generate_response( id => "invalid_start_period", message => "The 'start_period' parameter value $start_period is not a valid date", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
     }
 
     my $formattedEndPeriod      = UnixDate($end_period,      '%Y-%m-%d %H:%M:%S');
