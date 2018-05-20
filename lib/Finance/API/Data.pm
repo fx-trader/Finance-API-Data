@@ -313,6 +313,7 @@ get '/descriptivestatistics' => sub {
     my $max_display_items   = query_parameters->get('item_count') || 10;
     my $max_loaded_items    = query_parameters->get('max_loaded_items') || 5000;
     $max_loaded_items       = $max_display_items if ($max_display_items > $max_loaded_items);
+    my $expr                = query_parameters->get('expression');
 
     if (!@$instruments) {
         status 400;
@@ -327,6 +328,7 @@ get '/descriptivestatistics' => sub {
 
     my %results;
     my $params = {
+        'expression'        => $expr,
         'timeframe'         => $timeframe,
         'max_loaded_items'  => $max_loaded_items,
         'item_count'        => $max_display_items,
