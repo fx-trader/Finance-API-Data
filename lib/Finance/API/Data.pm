@@ -310,7 +310,7 @@ get '/descriptivestatistics' => sub {
 
     my $timeframe           = query_parameters->get('timeframe') || 'day';
     my $instruments         = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
-    my $max_display_items   = query_parameters->get('item_count') || 10;
+    my $max_display_items   = query_parameters->get('item_count') || 100;
     my $max_loaded_items    = query_parameters->get('max_loaded_items') || 5000;
     $max_loaded_items       = $max_display_items if ($max_display_items > $max_loaded_items);
     my $expr                = query_parameters->get('expression');
