@@ -308,7 +308,8 @@ get '/descriptivestatistics' => sub {
     my $cfg = $db->cfg;
     my $signal_processor = Finance::HostedTrader::ExpressionParser->new($db);
 
-    my $timeframe           = query_parameters->get('timeframe') || 'day';
+    my $percentiles         = query_parameters->get('percentiles') // '75,80,85,90,95,99';
+    my $timeframe           = query_parameters->get('timeframe') // 'day';
     my $instruments         = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
     my $max_display_items   = query_parameters->get('item_count') || 10;
     my $max_loaded_items    = query_parameters->get('max_loaded_items') || 5000;
@@ -329,6 +330,7 @@ get '/descriptivestatistics' => sub {
     my %results;
     my $params = {
         'expression'        => $expr,
+        'percentiles'       => $percentiles,
         'timeframe'         => $timeframe,
         'max_loaded_items'  => $max_loaded_items,
         'item_count'        => $max_display_items,
