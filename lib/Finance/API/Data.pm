@@ -7,6 +7,7 @@ use JSON::MaybeXS qw//;
 use Finance::HostedTrader::Datasource;
 use Finance::HostedTrader::Config;
 use Finance::HostedTrader::ExpressionParser;
+use Finance::HostedTrader::Provider;
 use Date::Manip;
 use MCE::Loop;
 
@@ -30,10 +31,12 @@ get '/' => sub {
 
 get '/instruments' => sub {
     my $cfg = Finance::HostedTrader::Config->new();
+    my $provider = query_parameters->get('provider') // 'default';
 
-    my $instruments = $cfg->symbols->all();
+    my $data_provider = Finance::HostedTrader::Provider->factory($provider);
+    my @instruments =$data_provider->getAllInstruments();
 
-    return _generate_response( results => $instruments );
+    return _generate_response( results => \@instruments );
 };
 
 get '/timeframes' => sub {
@@ -57,6 +60,7 @@ get '/indicators' => sub {
     my $start_period = query_parameters->get('start_period') || '3 months ago';
     my $end_period = query_parameters->get('end_period') || 'now';
     $max_loaded_items = $max_display_items if ($max_display_items > $max_loaded_items);
+    my $provider = query_parameters->get('provider') // 'default';
 
     if (!$expr) {
         status 400;
@@ -94,9 +98,11 @@ get '/indicators' => sub {
         'item_count'        => $max_display_items,
         'start_period'      => $formattedStartPeriod,
         'end_period'        => $formattedEndPeriod,
+        'provider'          => $provider,
     };
 
-    my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
+    my $data_provider = Finance::HostedTrader::Provider->factory($provider);
+    my %all_instruments = map { $_ => 1 } @{ $data_provider->getInstruments() };
     foreach my $instrument (@{$instruments}) {
         if (!$all_instruments{$instrument}) {
             status 400;
@@ -143,6 +149,7 @@ get '/signals' => sub {
     $max_loaded_items = $max_display_items if ($max_display_items > $max_loaded_items);
     my $startPeriod = query_parameters->get('start_period') || '3 months ago';
     my $endPeriod = query_parameters->get('end_period') || 'now';
+    my $provider = query_parameters->get('provider') // 'default';
 
     if (!$expr) {
         status 400;
@@ -180,9 +187,11 @@ get '/signals' => sub {
         'max_loaded_items'  => $max_loaded_items,
         'start_period'      => $formattedStartPeriod,
         'end_period'        => $formattedEndPeriod,
+        'provider'          => $provider,
     };
 
-    my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
+    my $data_provider = Finance::HostedTrader::Provider->factory($provider);
+    my %all_instruments = map { $_ => 1 } @{ $data_provider->getInstruments() };
     foreach my $instrument (@{$instruments}) {
         if (!$all_instruments{$instrument}) {
             status 400;
@@ -231,6 +240,7 @@ get '/signalsp' => sub {
     $max_loaded_items = $max_display_items if ($max_display_items > $max_loaded_items);
     my $startPeriod = query_parameters->get('start_period') || '3 months ago';
     my $endPeriod = query_parameters->get('end_period') || 'now';
+    my $provider = query_parameters->get('provider') // 'default';
 
     if (!$expr) {
         status 400;
@@ -267,9 +277,11 @@ get '/signalsp' => sub {
         'max_loaded_items'  => $max_loaded_items,
         'start_period'      => $formattedStartPeriod,
         'end_period'        => $formattedEndPeriod,
+        'provider'          => $provider,
     };
 
-    my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
+    my $data_provider = Finance::HostedTrader::Provider->factory($provider);
+    my %all_instruments = map { $_ => 1 } @{ $data_provider->getInstruments() };
 
     foreach my $instrument (@{$instruments}) {
         if (!$all_instruments{$instrument}) {
@@ -315,6 +327,7 @@ get '/descriptivestatistics' => sub {
     my $max_loaded_items    = query_parameters->get('max_loaded_items') || 5000;
     $max_loaded_items       = $max_display_items if ($max_display_items > $max_loaded_items);
     my $expr                = query_parameters->get('expression');
+    my $provider = query_parameters->get('provider') // 'default';
 
     if (!@$instruments) {
         status 400;
@@ -334,9 +347,12 @@ get '/descriptivestatistics' => sub {
         'timeframe'         => $timeframe,
         'max_loaded_items'  => $max_loaded_items,
         'item_count'        => $max_display_items,
+        'provider'          => $provider,
     };
 
-    my %all_instruments = map { $_ => 1 } @{ $cfg->symbols->all() };
+    my $data_provider = Finance::HostedTrader::Provider->factory($provider);
+    my %all_instruments = map { $_ => 1 } @{ $data_provider->getInstruments() };
+
     foreach my $instrument (@{$instruments}) {
         if (!$all_instruments{$instrument}) {
             status 400;
@@ -369,12 +385,12 @@ get '/descriptivestatistics' => sub {
 get '/screener' => sub {
     my $cfg                 = Finance::HostedTrader::Config->new();
     my $signal_processor    = Finance::HostedTrader::ExpressionParser->new();
-    my $instruments         = $cfg->symbols->natural;
 
     my $timeframe   = query_parameters->get('timeframe') || 'day';
     my $expr        = query_parameters->get('expression');
     my $max_display_items   = 1;
     my $max_loaded_items    = query_parameters->get('max_loaded_items') || 5000;
+    my $provider = query_parameters->get('provider') // 'default';
 
     if (!$expr) {
         status 400;
@@ -394,9 +410,11 @@ get '/screener' => sub {
         'timeframe'         => $timeframe,
         'max_loaded_items'  => $max_loaded_items,
         'item_count'        => $max_display_items,
+        'provider'          => $provider,
     };
 
-    foreach my $instrument (@{$instruments}) {
+    my @instruments         = $provider->getInstruments();
+    foreach my $instrument (@instruments) {
         $params->{symbol} = $instrument;
         my $indicator_result;
         eval {
@@ -436,8 +454,10 @@ get '/lastclose' => sub {
     my $db = Finance::HostedTrader::Datasource->new();
     my $cfg = $db->cfg;
     my $instruments  = query_parameters->get('instruments');
+    my $provider = query_parameters->get('provider') // 'default';
+    my $data_provider = Finance::HostedTrader::Provider->factory($provider);
 
-    $instruments = (defined($instruments) ? [ split( ',', $instruments) ] : $cfg->symbols->natural);
+    $instruments = (defined($instruments) ? [ split( ',', $instruments) ] : [ $data_provider->getInstruments ]);
 
     my $timeframe = 300;#TODO hardcoded lowest available timeframe is 5min. Could look it up in the config object ($db->cfg) instead.
 
