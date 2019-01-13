@@ -413,7 +413,7 @@ get '/screener' => sub {
         'provider'          => $provider,
     };
 
-    my @instruments         = $provider->getInstruments();
+    my @instruments         = $cfg->provider($provider)->getInstruments();
     foreach my $instrument (@instruments) {
         $params->{symbol} = $instrument;
         my $indicator_result;
