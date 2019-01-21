@@ -463,7 +463,7 @@ get '/lastclose' => sub {
 
     my %results;
     foreach my $instrument (@{$instruments}) {
-        my @lastclose = $db->getLastClose( symbol => $instrument);
+        my @lastclose = $db->getLastClose( instrument => $instrument, provider => $provider );
         $results{$instrument} = \@lastclose;
     }
 
