@@ -102,7 +102,7 @@ get '/indicators' => sub {
     };
 
     my $data_provider = $cfg->provider($provider);
-    my %all_instruments = map { $_ => 1 } $data_provider->getInstruments();
+    my %all_instruments = map { $_ => 1 } $data_provider->getAllInstruments();
     foreach my $instrument (@{$instruments}) {
         if (!$all_instruments{$instrument}) {
             status 400;
@@ -191,7 +191,7 @@ get '/signals' => sub {
     };
 
     my $data_provider = $cfg->provider($provider);
-    my %all_instruments = map { $_ => 1 } $data_provider->getInstruments();
+    my %all_instruments = map { $_ => 1 } $data_provider->getAllInstruments();
     foreach my $instrument (@{$instruments}) {
         if (!$all_instruments{$instrument}) {
             status 400;
@@ -281,7 +281,7 @@ get '/signalsp' => sub {
     };
 
     my $data_provider = $cfg->provider($provider);
-    my %all_instruments = map { $_ => 1 } $data_provider->getInstruments();
+    my %all_instruments = map { $_ => 1 } $data_provider->getAllInstruments();
 
     foreach my $instrument (@{$instruments}) {
         if (!$all_instruments{$instrument}) {
@@ -351,7 +351,7 @@ get '/descriptivestatistics' => sub {
     };
 
     my $data_provider = $cfg->provider($provider);
-    my %all_instruments = map { $_ => 1 } $data_provider->getInstruments();
+    my %all_instruments = map { $_ => 1 } $data_provider->getAllInstruments();
 
     foreach my $instrument (@{$instruments}) {
         if (!$all_instruments{$instrument}) {
