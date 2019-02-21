@@ -57,7 +57,7 @@ get '/indicators' => sub {
     my $instruments = (defined(query_parameters->get('instruments')) ? [ split( ',', query_parameters->get('instruments')) ] : []);
     my $max_display_items = query_parameters->get('item_count') || 10;
     my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
-    my $start_period = query_parameters->get('start_period') || '3 months ago';
+    my $start_period = query_parameters->get('start_period') || '3 years ago';
     my $end_period = query_parameters->get('end_period') || 'now';
     $max_loaded_items = $max_display_items if ($max_display_items > $max_loaded_items);
     my $provider = query_parameters->get('provider');
@@ -147,7 +147,7 @@ get '/signals' => sub {
     my $max_display_items = query_parameters->get('item_count') || 100;
     my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
     $max_loaded_items = $max_display_items if ($max_display_items > $max_loaded_items);
-    my $startPeriod = query_parameters->get('start_period') || '3 months ago';
+    my $startPeriod = query_parameters->get('start_period') || '3 years ago';
     my $endPeriod = query_parameters->get('end_period') || 'now';
     my $provider = query_parameters->get('provider');
 
@@ -238,7 +238,7 @@ get '/signalsp' => sub {
     my $max_display_items = query_parameters->get('item_count') || 100;
     my $max_loaded_items = query_parameters->get('max_loaded_items') || 5000;
     $max_loaded_items = $max_display_items if ($max_display_items > $max_loaded_items);
-    my $startPeriod = query_parameters->get('start_period') || '3 months ago';
+    my $startPeriod = query_parameters->get('start_period') || '3 years ago';
     my $endPeriod = query_parameters->get('end_period') || 'now';
     my $provider = query_parameters->get('provider');
 
