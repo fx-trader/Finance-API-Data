@@ -328,6 +328,7 @@ get '/descriptivestatistics' => sub {
     $max_loaded_items       = $max_display_items if ($max_display_items > $max_loaded_items);
     my $expr                = query_parameters->get('expression');
     my $provider = query_parameters->get('provider');
+    my $inner_sql_filter = query_parameters->get('inner_sql_filter');
 
     if (!@$instruments) {
         status 400;
@@ -348,6 +349,7 @@ get '/descriptivestatistics' => sub {
         'max_loaded_items'  => $max_loaded_items,
         'item_count'        => $max_display_items,
         'provider'          => $provider,
+        'inner_sql_filter'  => $inner_sql_filter,
     };
 
     my $data_provider = $cfg->provider($provider);
