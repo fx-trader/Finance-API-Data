@@ -108,7 +108,7 @@ get '/indicators' => sub {
             status 400;
             return _generate_response( id => "invalid_instrument", message => "instrument $instrument is not supported", url => "http://apidocs.fxhistoricaldata.com/#available-markets" );
         }
-        $params->{symbol} = $instrument;
+        $params->{instrument} = $instrument;
         my $indicator_result;
         eval {
             $indicator_result = $signal_processor->getIndicatorData($params);
@@ -126,7 +126,7 @@ get '/indicators' => sub {
 
         $results{$instrument} = $indicator_result;
     }
-    delete $params->{symbol};
+    delete $params->{instrument};
 
     my %return_obj = (
         params => $params,
@@ -197,7 +197,7 @@ get '/signals' => sub {
             status 400;
             return _generate_response( id => "invalid_instrument", message => "instrument $instrument is not supported", url => "http://apidocs.fxhistoricaldata.com/#available-markets" );
         }
-        $params->{symbol} = $instrument;
+        $params->{instrument} = $instrument;
         my $signal_result;
         eval {
             $signal_result = $signal_processor->getSignalData($params);
@@ -216,7 +216,7 @@ get '/signals' => sub {
         };
         $results{$instrument} = $signal_result;
     }
-    delete $params->{symbol};
+    delete $params->{instrument};
 
     my %return_obj = (
         params => $params,
@@ -295,14 +295,14 @@ get '/signalsp' => sub {
         my %ret;
         my $signal_processor = Finance::HostedTrader::ExpressionParser->new();
         for my $instrument (@{ $chunk_ref }) {
-            $params->{symbol} = $instrument;
+            $params->{instrument} = $instrument;
             $ret{$instrument} = $signal_processor->getSignalData($params);
         }
         MCE->gather(%ret);
 
     } $instruments;
 
-    delete $params->{symbol};
+    delete $params->{instrument};
 
     my %return_obj = (
         params => $params,
@@ -360,7 +360,7 @@ get '/descriptivestatistics' => sub {
             status 400;
             return _generate_response( id => "invalid_instrument", message => "instrument $instrument is not supported", url => "http://apidocs.fxhistoricaldata.com/#available-markets" );
         }
-        $params->{symbol} = $instrument;
+        $params->{instrument} = $instrument;
         my $result;
         eval {
             $result = $signal_processor->getDescriptiveStatisticsData($params);
@@ -374,7 +374,7 @@ get '/descriptivestatistics' => sub {
 
         $results{$instrument} = $result;
     }
-    delete $params->{symbol};
+    delete $params->{instrument};
 
     my %return_obj = (
         params  => $params,
@@ -417,7 +417,7 @@ get '/screener' => sub {
 
     my @instruments         = $cfg->provider($provider)->getInstruments();
     foreach my $instrument (@instruments) {
-        $params->{symbol} = $instrument;
+        $params->{instrument} = $instrument;
         my $indicator_result;
         eval {
             $indicator_result = $signal_processor->getIndicatorData($params);
@@ -435,7 +435,7 @@ get '/screener' => sub {
 
         $results{$instrument} = $indicator_result->{data};
     }
-    delete $params->{symbol};
+    delete $params->{instrument};
 
     foreach my $instrument ( sort { $results{$b}->[0][1] <=> $results{$a}->[0][1] } keys %results) {
         push @ordered_results, [ $instrument, @{$results{$instrument}->[0]} ];
