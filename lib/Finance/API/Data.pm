@@ -461,7 +461,7 @@ get '/lastclose' => sub {
 
     $instruments = (defined($instruments) ? [ split( ',', $instruments) ] : $data_provider->getInstruments);
 
-    my $timeframe = 300;#TODO hardcoded lowest available timeframe is 5min. Could look it up in the config object ($db->cfg) instead.
+    my $timeframe = 300;#TODO hardcoded lowest available timeframe is 5minute. Could look it up in the config object ($db->cfg) instead.
 
     my %results;
     foreach my $instrument (@{$instruments}) {
