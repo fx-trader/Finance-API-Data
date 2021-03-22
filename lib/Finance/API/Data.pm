@@ -87,7 +87,7 @@ get '/indicators' => sub {
     my %all_timeframes = map { $_ => 1 } @{ $cfg->timeframes->all_by_name() };
     if (!$all_timeframes{$timeframe}) {
         status 400;
-        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://api.fxhistoricaldata.com/timeframes" );
     }
 
     my %results;
@@ -176,7 +176,7 @@ get '/signals' => sub {
     my %all_timeframes = map { $_ => 1 } @{ $cfg->timeframes->all_by_name() };
     if (!$all_timeframes{$timeframe}) {
         status 400;
-        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://api.fxhistoricaldata.com/timeframes" );
     }
 
     my %results;
@@ -267,7 +267,7 @@ get '/signalsp' => sub {
     my %all_timeframes = map { $_ => 1 } @{ $cfg->timeframes->all_by_name() };
     if (!$all_timeframes{$timeframe}) {
         status 400;
-        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://apidocs.fxhistoricaldata.com/#signals" );
+        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://api.fxhistoricaldata.com/timeframes" );
     }
 
     my $params = {
@@ -338,7 +338,7 @@ get '/descriptivestatistics' => sub {
     my %all_timeframes = map { $_ => 1 } @{ $cfg->timeframes->all_by_name() };
     if (!$all_timeframes{$timeframe}) {
         status 400;
-        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://api.fxhistoricaldata.com/timeframes" );
     }
 
     my %results;
@@ -402,7 +402,7 @@ get '/screener' => sub {
     my %all_timeframes = map { $_ => 1 } @{ $cfg->timeframes->all_by_name() };
     if (!$all_timeframes{$timeframe}) {
         status 400;
-        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://apidocs.fxhistoricaldata.com/#indicators" );
+        return _generate_response( id => "invalid_timeframe", message => "The 'timeframe' parameter value $timeframe is not a valid timeframe", url => "http://api.fxhistoricaldata.com/timeframes" );
     }
 
     my %results;
