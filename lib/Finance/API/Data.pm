@@ -385,6 +385,7 @@ get '/descriptivestatistics' => sub {
 };
 
 get '/screener' => sub {
+    header 'Access-Control-Allow-Origin' => 'http://fxhistoricaldata.com';
     my $cfg                 = Finance::HostedTrader::Config->new();
     my $signal_processor    = Finance::HostedTrader::ExpressionParser->new();
 
